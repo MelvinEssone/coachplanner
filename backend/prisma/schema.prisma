@@ -1,0 +1,220 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  nom           String
+  prenom        String
+  email         String   @unique
+  passwordHash  String
+  role          Role     @default(APPRENANT)
+  avatar        String?
+  emailVerified Boolean  @default(false)
+  resetToken    String?
+  resetTokenExp DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  entreprise   Entreprise? @relation(fields: [entrepriseId], references: [id])
+  entrepriseId String?
+
+  sessions_formateur Session[]           @relation("Formateur")
+  sessions_apprenant Session[]           @relation("Apprenant")
+  signatures_session SignatureSession[]
+
+  formateurProfil FormateurProfil?
+  managerSettings ManagerSettings?
+
+  assignmentsManager   Assignment_Manager[] @relation("Manager")
+  assignmentsApprenant Assignment_Manager[] @relation("Apprenant")
+
+  assignmentsCentre    Assignment_Centre[] @relation("Responsable")
+  assignmentsFormateur Assignment_Centre[] @relation("Formateur")
+
+  rapportsManager   Rapport_Horaire[] @relation("Manager")
+  rapportsApprenant Rapport_Horaire[] @relation("Apprenant")
+
+  signaturesRapport Signature_Rapport[]
+
+  notifications Notification[]
+
+  modulesFormateur Module_Formation[]
+}
+
+enum Role {
+  FORMATEUR
+  APPRENANT
+  MANAGER_RH
+  RESPONSABLE_CENTRE
+}
+
+model Entreprise {
+  id        String   @id @default(cuid())
+  nom       String
+  type      String // entreprise | organisme
+  adresse   String?
+  siret     String?
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model Module_Formation {
+  id          String   @id @default(cuid())
+  nom         String
+  description String?
+  formateurId String
+  formateur   User     @relation(fields: [formateurId], references: [id])
+  sessions    Session[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Session {
+  id           String        @id @default(cuid())
+  formateurId  String
+  apprenantId  String
+  moduleId     String
+  dateDebut    DateTime
+  dateFin      DateTime
+  dureeMinutes Int
+  type         String? // individuelle, groupe, presentiel, distanciel
+  statut       SessionStatut @default(A_VENIR)
+  notes        String?
+  archived     Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  formateur User             @relation("Formateur", fields: [formateurId], references: [id])
+  apprenant User             @relation("Apprenant", fields: [apprenantId], references: [id])
+  module    Module_Formation @relation(fields: [moduleId], references: [id])
+  signatures SignatureSession[]
+}
+
+enum SessionStatut {
+  A_VENIR
+  EN_COURS
+  TERMINEE
+}
+
+model SignatureSession {
+  id            String   @id @default(cuid())
+  sessionId     String
+  userId        String
+  signatureData String // base64 image
+  horodatage    DateTime @default(now())
+  ipAddress     String?
+  pdfUrl        String?
+
+  session Session @relation(fields: [sessionId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([sessionId, userId])
+}
+
+model Rapport_Horaire {
+  id           String        @id @default(cuid())
+  managerId    String
+  apprenantId  String
+  periodeDebut DateTime
+  periodeFin   DateTime
+  statut       RapportStatut @default(EN_ATTENTE)
+  pdfUrl       String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  manager   User @relation("Manager", fields: [managerId], references: [id])
+  apprenant User @relation("Apprenant", fields: [apprenantId], references: [id])
+
+  signature Signature_Rapport?
+}
+
+enum RapportStatut {
+  EN_ATTENTE
+  SIGNE
+  ARCHIVE
+}
+
+model Signature_Rapport {
+  id            String   @id @default(cuid())
+  rapportId     String   @unique
+  managerId     String
+  signatureData String
+  horodatage    DateTime @default(now())
+  ipAddress     String?
+
+  rapport  Rapport_Horaire @relation(fields: [rapportId], references: [id])
+  manager  User            @relation(fields: [managerId], references: [id])
+}
+
+model ManagerSettings {
+  id               String           @id @default(cuid())
+  managerId        String           @unique
+  frequenceRapport FrequenceRapport @default(MENSUELLE)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  manager User @relation(fields: [managerId], references: [id])
+}
+
+enum FrequenceRapport {
+  HEBDOMADAIRE
+  MENSUELLE
+  MANUELLE
+}
+
+model Assignment_Manager {
+  id          String @id @default(cuid())
+  managerId   String
+  apprenantId String
+  createdAt   DateTime @default(now())
+
+  manager   User @relation("Manager", fields: [managerId], references: [id])
+  apprenant User @relation("Apprenant", fields: [apprenantId], references: [id])
+
+  @@unique([managerId, apprenantId])
+}
+
+model Assignment_Centre {
+  id            String @id @default(cuid())
+  responsableId String
+  formateurId   String
+  createdAt     DateTime @default(now())
+
+  responsable User @relation("Responsable", fields: [responsableId], references: [id])
+  formateur   User @relation("Formateur", fields: [formateurId], references: [id])
+
+  @@unique([responsableId, formateurId])
+}
+
+model FormateurProfil {
+  id         String    @id @default(cuid())
+  userId     String    @unique
+  matieres   String[] // array of subjects
+  statut     String    @default("Actif") // Actif / Inactif / En congé
+  dateEntree DateTime?
+  telephone  String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id             String   @id @default(cuid())
+  destinataireId String
+  type           String
+  message        String
+  lu             Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  destinataire User @relation(fields: [destinataireId], references: [id])
+}

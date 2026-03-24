@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "coachplanner-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000,
+      "cwd": "/Users/melvinessone/Desktop/Site webs/Coachplanner/coachplanner/frontend"
+    }
+  ]
+}
