@@ -30,6 +30,7 @@ interface NavItem {
 
 const navByRole: Record<string, NavItem[]> = {
   FORMATEUR: [
+    { href: "/formateur/dashboard", label: "Tableau de bord", icon: BarChart3 },
     { href: "/formateur/sessions", label: "Mes sessions", icon: Calendar },
     { href: "/formateur/agenda", label: "Mon agenda", icon: LayoutDashboard },
     { href: "/formateur/modules", label: "Modules", icon: BookOpen },

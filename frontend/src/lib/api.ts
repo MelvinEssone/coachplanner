@@ -1,21 +1,33 @@
-import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosRequestConfig } from 'axios';
+import { demoAdapter } from './demoInterceptor';
+
+function isDemoMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  const token = localStorage.getItem('accessToken');
+  return token === 'demo-token';
+}
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 const api: AxiosInstance = axios.create({
   baseURL: `${API_URL}/api`,
+  timeout: 5000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor: attach token
+// Request interceptor: attach token + demo adapter
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('accessToken');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+      }
+      // Mode démo : utiliser l'adaptateur mock
+      if (isDemoMode()) {
+        config.adapter = (cfg: AxiosRequestConfig) => demoAdapter(cfg);
       }
     }
     return config;
