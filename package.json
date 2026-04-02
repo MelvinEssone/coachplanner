@@ -1,0 +1,34 @@
+{
+  "name": "coachplanner",
+  "version": "1.0.0",
+  "description": "SaaS de gestion des sessions de coaching — Next.js + Express + PostgreSQL",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently -n \"frontend,backend\" -c \"blue,green\" \"npm run dev --workspace=frontend\" \"npm run dev --workspace=backend\"",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "build": "npm run build --workspace=backend && npm run build --workspace=frontend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "build:backend": "npm run build --workspace=backend",
+    "start": "concurrently -n \"frontend,backend\" -c \"blue,green\" \"npm run start --workspace=frontend\" \"npm run start --workspace=backend\"",
+    "lint": "npm run lint --workspace=frontend",
+    "db:generate": "npm run prisma:generate --workspace=backend",
+    "db:migrate": "npm run prisma:migrate --workspace=backend",
+    "db:studio": "npm run prisma:studio --workspace=backend",
+    "db:seed": "npm run prisma:seed --workspace=backend",
+    "install:all": "npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "author": "Melvin ESSONE",
+  "license": "MIT"
+}
